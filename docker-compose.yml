@@ -1,0 +1,45 @@
+version: "3.8" # Version de syntaxe de Docker Compose
+
+services:
+  backend: # Service backend (application Spring Boot)
+    build: ./simpleapi # Construit l'image Docker à partir du dossier ./simpleapi
+    container_name: backend # Nom du conteneur Docker
+    depends_on:
+      - tp1-db # Ce service dépend du démarrage préalable de la base de données
+    networks:
+      - app-network # Connecté au réseau Docker nommé "app-network"
+    environment: # Variables d'environnement injectées dans le conteneur
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL} # URL JDBC vers PostgreSQL
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME} # Nom d'utilisateur BDD
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD} # Mot de passe BDD
+    restart: unless-stopped # Redémarre automatiquement sauf si on l’arrête manuellement
+
+  tp1-db: # Service base de données PostgreSQL
+    build: . # Construit l'image Docker à partir du Dockerfile du dossier courant
+    container_name: tp1-db # Nom du conteneur Docker
+    environment: # Variables d'environnement nécessaires à PostgreSQL
+      POSTGRES_DB: ${POSTGRES_DB} # Nom de la base de données
+      POSTGRES_USER: ${POSTGRES_USER} # Utilisateur PostgreSQL
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD} # Mot de passe PostgreSQL
+    volumes:
+      - postgres-data:/var/lib/postgresql/data # Volume persistant pour stocker les données PostgreSQL
+    networks:
+      - app-network # Connecté au même réseau que les autres services
+    restart: unless-stopped # Redémarre automatiquement sauf arrêt manuel
+
+  http-server: # Service HTTP (serveur Apache utilisé comme reverse proxy)
+    build: ./http-server # Construit l'image Docker depuis ./http-server
+    container_name: http-server # Nom du conteneur Docker
+    depends_on:
+      - backend # Démarre uniquement après que le backend soit opérationnel
+    ports:
+      - "80:80" # Redirige le port 80 de la machine hôte vers le conteneur
+    networks:
+      - app-network # Connecté au réseau partagé entre les services
+    restart: unless-stopped # Politique de redémarrage du conteneur
+
+networks:
+  app-network: # Déclaration du réseau Docker partagé entre les services
+
+volumes:
+  postgres-data: # Volume Docker nommé pour persister les données de PostgreSQL
