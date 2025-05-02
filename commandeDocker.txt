@@ -1,0 +1,38 @@
+cd /Users/mehdisaadi/TP1-DevOps
+
+
+docker build -t rebeufou/tp1 .
+docker run -p 8888:5005 --name tp1 rebeufou/tp1
+
+pour vérifier que l'application fonctionne : docker ps
+pour checker que la bdd est bien lancée : docker exec -it tp1 psql -U usr -d db
+
+pour créer le dossier qui contiendra la bdd
+mkdir -p ~/docker-volumes/postgres-data
+
+Pour lancer l'application :
+
+docker run -d \
+  --name tp1-db \
+  --network app-network \
+  -e POSTGRES_DB=db \
+  -e POSTGRES_USER=usr \
+  -e POSTGRES_PASSWORD=pwd \
+  -v ~/docker-volumes/postgres-data:/var/lib/postgresql/data \
+  rebeufou/tp1
+
+
+docker run -d \
+  -p "8090:8080" \
+  --net=app-network \
+  --name=adminer \
+  adminer
+
+Pour compiler le code Java :
+javac Main.java
+
+Pour build la nouvelle image :
+docker build -t java-hello-world .
+
+Pour run la nouvelle image
+docker run java-hello-world
